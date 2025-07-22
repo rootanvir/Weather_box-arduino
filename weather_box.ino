@@ -1,32 +1,43 @@
-#include <Wire.h>
-#include <Adafruit_SSD1306.h>
-#include <Adafruit_GFX.h>
-#include <SFE_BMP180.h>
-#include <DHT.h>
+#include <Wire.h>                      // For I2C communication
+#include <Adafruit_SSD1306.h>         // OLED display library
+#include <Adafruit_GFX.h>             // Graphics support for OLED
+#include <SFE_BMP180.h>               // BMP180 pressure/temperature sensor library
+#include <DHT.h>                      // DHT11 humidity sensor library
 
+// OLED display resolution
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
-#define OLED_RESET    -1
+
+// OLED reset pin (not used with NodeMCU)
+#define OLED_RESET -1
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
+// BMP180 sensor object
 SFE_BMP180 bmp;
-#define DHTPIN D5
-#define DHTTYPE DHT11
+
+// DHT11 sensor setup
+#define DHTPIN D5       // GPIO pin connected to DHT11 data
+#define DHTTYPE DHT11   // Type of DHT sensor
 DHT dht(DHTPIN, DHTTYPE);
 
 void setup() {
-  Wire.begin(D2, D1);  // SDA, SCL for NodeMCU
+  // Initialize I2C with custom SDA (D2) and SCL (D1) pins for NodeMCU
+  Wire.begin(D2, D1);
+
   Serial.begin(9600);
-  while (!Serial);
+  while (!Serial);  // Wait for serial monitor (optional)
 
-  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+  // Initialize OLED display
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {  // 0x3C is I2C address
     Serial.println("OLED not found");
-    while (1);
+    while (1);  // Stop if OLED not found
   }
-  display.clearDisplay();
+  display.clearDisplay();  // Clear screen initially
 
+  // Initialize DHT11 sensor
   dht.begin();
 
+  // Initialize BMP180 sensor
   if (!bmp.begin()) {
     Serial.println("BMP180 failed");
   } else {
@@ -36,50 +47,51 @@ void setup() {
 
 void loop() {
   char status;
-  double bmpTemp, bmpPressure;
+  double bmpTemp = 0, bmpPressure = 0;
 
+  // Clear OLED before writing new data
   display.clearDisplay();
-  display.setTextSize(1);
-  display.setTextColor(WHITE);
-  display.setCursor(0, 0);
+  display.setTextSize(1);            // Set text size
+  display.setTextColor(WHITE);       // Set text color to white
+  display.setCursor(0, 0);           // Start from top-left corner
 
-  // Read BMP180 Temperature
+  // === Read BMP180 Temperature ===
   status = bmp.startTemperature();
   if (status) {
-    delay(status);
+    delay(status);                   // Wait for temperature reading
     status = bmp.getTemperature(bmpTemp);
   }
 
-  // Read BMP180 Pressure
-  status = bmp.startPressure(3);
+  // === Read BMP180 Pressure ===
+  status = bmp.startPressure(3);     // 3 = high resolution
   if (status) {
-    delay(status);
+    delay(status);                   // Wait for pressure reading
     status = bmp.getPressure(bmpPressure, bmpTemp);
   }
 
-  // Read DHT11 Humidity
+  // === Read DHT11 Humidity ===
   float dhtHumidity = dht.readHumidity();
 
-  // Print Temperature from BMP180
+  // === Display Temperature from BMP180 ===
   display.print("Temp     : ");
-  display.print(bmpTemp, 2);
+  display.print(bmpTemp, 2);         // 2 decimal places
   display.println(" C");
 
-  // Print Humidity from DHT11
+  // === Display Humidity from DHT11 ===
   display.print("Humidity : ");
   if (!isnan(dhtHumidity)) {
-    display.print(dhtHumidity, 1);
+    display.print(dhtHumidity, 1);   // 1 decimal place
     display.println(" %");
   } else {
-    display.println("N/A");
+    display.println("N/A");         // Display error if sensor failed
   }
 
-  // Print Pressure from BMP180
+  // === Display Pressure from BMP180 ===
   display.print("Pressure : ");
-  display.print(bmpPressure / 100, 2); // Pa to hPa
+  display.print(bmpPressure / 100, 2); // Convert Pa to hPa
   display.println(" hPa");
 
-  // Calculate Rain Chance % based on pressure and print
+  // === Rain Prediction Logic Based on Pressure ===
   float pressure_hPa = bmpPressure / 100.0;
   int rainChancePercent;
 
@@ -97,10 +109,13 @@ void loop() {
     rainChancePercent = 90;
   }
 
+  // === Display Rain Chance Percentage ===
   display.print("Rain     : ");
   display.print(rainChancePercent);
   display.println(" %");
 
+  // === Show Everything on OLED ===
   display.display();
-  delay(3000);
+
+  delay(3000);  // Wait 3 seconds before next update
 }
