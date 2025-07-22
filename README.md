@@ -53,7 +53,7 @@
 
 | **Pin on OLED**   | **Connects to NodeMCU** | **Note**                              |
 |-------------------|--------------------------|----------------------------------------|
-| VCC               | VIN                      | 3.3V–5V input (safe on VIN)           |
+| VCC               | VIN                      | 3.3V           |
 | GND               | GND                      | Ground                                 |
 | SDA               | D2                       | I2C Data (shared with BMP180)          |
 | SCL               | D1                       | I2C Clock (shared with BMP180)         |
