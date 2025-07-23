@@ -57,6 +57,9 @@
 | GND               | GND                      | Ground                                 |
 | SDA               | D2                       | I2C Data (shared with BMP180)          |
 | SCL               | D1                       | I2C Clock (shared with BMP180)         |
+<img width="1842" height="1646" alt="Image" src="https://github.com/user-attachments/assets/142312f4-0df8-4f82-9bde-be3b72472fba" />
 
+---
 
+# Final 
 ![Image](https://github.com/user-attachments/assets/8198d71a-88df-44e2-8664-7f1dfc45b673)
